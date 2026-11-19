@@ -20,6 +20,15 @@ directly in the client application.
     a maximum of about *maxconn* connections.  *\*args* and *\*\*kwargs* are
     passed to the `~psycopg2.connect()` function.
 
+    .. versionchanged:: 2.9.14
+
+        Connections returned to the pool are reset using :sql:`DISCARD ALL`
+        so that session-level state (``search_path``, temporary tables,
+        prepared statements, session GUCs, advisory locks, ...) left by a
+        previous user does not leak to the next one.  The *reset* keyword
+        argument can be set to a different SQL statement or to `!None` to
+        restore the previous rollback-only behaviour.
+
     The following methods are expected to be implemented by subclasses:
 
     .. method:: getconn(key=None)
@@ -36,6 +45,23 @@ directly in the client application.
 
         If *close* is `!True`, discard the connection from the pool.
         *key* should be used consistently with `getconn()`.
+
+        Before being made available again the connection is rolled back and
+        its session state is reset, by default executing :sql:`DISCARD ALL`.
+        A connection whose reset fails is closed and discarded instead of
+        being returned to the pool.
+
+    .. method:: putconns(conns, close=False)
+
+        Put away several connections in a single batched operation.
+
+        The connections are reset in one contiguous phase: all the reset
+        statements are issued before any connection is published back into
+        the pool, instead of alternating reset and pool bookkeeping for
+        every single connection.  If *close* is `!True` every connection is
+        discarded.
+
+        .. versionadded:: 2.9.14
 
     .. method:: closeall
 

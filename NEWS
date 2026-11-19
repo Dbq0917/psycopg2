@@ -1,6 +1,18 @@
 Current release
 ---------------
 
+What's new in psycopg 2.9.14
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Connection pools now reset the session state of every returned
+  connection using :sql:`DISCARD ALL`, preventing session-level settings
+  such as ``search_path``, temporary tables or prepared statements from
+  leaking across users of a reused connection. The reset statement is
+  configurable via the new *reset* pool argument and can be disabled by
+  passing `!None`.
+- Add `!putconns()` to return several connections to a pool in a single
+  batched operation, merging their reset statements into one phase.
+
 What's new in psycopg 2.9.13
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
